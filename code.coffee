@@ -1,6 +1,6 @@
 canvas = document.getElementById('c')
 c = canvas.getContext('2d')
-size = 1024
+size = 512
 canvas.width = canvas.height = size
 
 
@@ -8,7 +8,7 @@ canvas.width = canvas.height = size
 # 	console.log 'click'
 # 	c.fillRect e.clientX - 20, e.clientY - 20, 40, 40
 c.fillStyle = '#007fff'
-for i in [0...15]
+for i in [0...5]
 	x = Math.random() * size
 	y = Math.random() * size
 	w = Math.random() * 10 + 10

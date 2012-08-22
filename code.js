@@ -5,13 +5,13 @@ canvas = document.getElementById('c');
 
 c = canvas.getContext('2d');
 
-size = 1024;
+size = 512;
 
 canvas.width = canvas.height = size;
 
 c.fillStyle = '#007fff';
 
-for (i = _i = 0; _i < 15; i = ++_i) {
+for (i = _i = 0; _i < 5; i = ++_i) {
   x = Math.random() * size;
   y = Math.random() * size;
   w = Math.random() * 10 + 10;
