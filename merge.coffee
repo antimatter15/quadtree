@@ -87,7 +87,6 @@ divideQuadrants = (x, y, w, h) ->
 	# 	# for [i, j] in quads
 	# 	boxes = boxes.concat divideQuadrants(i, j, w / 2, h / 2)
 
-	start = +new Date
 	hw = w >> 1
 	hh = h >> 1
 	boxes = [].concat divideQuadrants(x, y, hw, hh),
@@ -95,7 +94,7 @@ divideQuadrants = (x, y, w, h) ->
 		divideQuadrants(x + hw, y + hh, hw, hh),
 		divideQuadrants(x, y + hh, hw, hh)
 
-	layers[Math.log(w) / Math.log(2) - 1] += new Date - start
+	# start = +new Date
 	# merge boxes!
 	while boxes.length > 1 #loop until it's done
 		# try to 	
@@ -119,6 +118,9 @@ divideQuadrants = (x, y, w, h) ->
 		boxes = (box for box in boxes when box isnt a and box isnt b)
 		boxes.push bound
 		# console.log boxes
+
+	
+	# layers[Math.log(w) / Math.log(2) - 1] += new Date - start
 	return boxes
 
 
@@ -158,7 +160,7 @@ basictree = (x, y, w, h) ->
 		basictree(x + hw, y + hh, hw, hh),
 		basictree(x, y + hh, hw, hh)
 
-	return []
+	return boxes
 
 
 c.strokeStyle = "black"

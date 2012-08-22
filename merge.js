@@ -68,7 +68,7 @@ merges = 0;
 layers = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 divideQuadrants = function(x, y, w, h) {
-  var a, b, bound, box, boxes, hh, hw, pair, pairs, score, sorted, start, weight, _ref;
+  var a, b, bound, box, boxes, hh, hw, pair, pairs, score, sorted, weight, _ref;
   if (w === 1 && h === 1) {
     if (pixels[4 * (y * size + x) + 3] > 0) {
       return [[x, y, 1, 1, 0]];
@@ -76,11 +76,9 @@ divideQuadrants = function(x, y, w, h) {
       return [];
     }
   }
-  start = +(new Date);
   hw = w >> 1;
   hh = h >> 1;
   boxes = [].concat(divideQuadrants(x, y, hw, hh), divideQuadrants(x + hw, y, hw, hh), divideQuadrants(x + hw, y + hh, hw, hh), divideQuadrants(x, y + hh, hw, hh));
-  layers[Math.log(w) / Math.log(2) - 1] += new Date - start;
   while (boxes.length > 1) {
     pairs = (function() {
       var _j, _len, _ref, _ref1, _results;
@@ -171,7 +169,7 @@ basictree = function(x, y, w, h) {
   hw = w >> 1;
   hh = h >> 1;
   boxes = [].concat(basictree(x, y, hw, hh), basictree(x + hw, y, hw, hh), basictree(x + hw, y + hh, hw, hh), basictree(x, y + hh, hw, hh));
-  return [];
+  return boxes;
 };
 
 c.strokeStyle = "black";
