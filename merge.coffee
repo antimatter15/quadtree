@@ -191,7 +191,7 @@ divideQuadrants = (x, y, w, h) ->
 				boxes.push box
 
 
-		console.log 'skipping', skipbox.length, boxes.length
+		# console.log 'skipping', skipbox.length, boxes.length
 
 	# merge boxes!
 	while boxes.length > 1 #loop until it's done

@@ -124,7 +124,6 @@ divideQuadrants = function(x, y, w, h) {
         boxes.push(box);
       }
     }
-    console.log('skipping', skipbox.length, boxes.length);
   }
   while (boxes.length > 1) {
     pairs = (function() {
