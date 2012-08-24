@@ -115,10 +115,10 @@ smallBoundingBox = (x, y) ->
 			if xmin < i < xmax and ymin < j < ymax
 				continue
 			if getPixel(x + i, y + j)
-				xmin = Math.min(xmin, x + i)
-				xmax = Math.max(xmax, x + i)
-				ymin = Math.min(ymin, y + i)
-				ymax = Math.max(ymax, y + i)
+				xmin = Math.min(xmin, i)
+				xmax = Math.max(xmax, i)
+				ymin = Math.min(ymin, j)
+				ymax = Math.max(ymax, j)
 
 	return [] if ymax < 0
 	
@@ -128,13 +128,13 @@ smallBoundingBox = (x, y) ->
 
 
 divideQuadrants = (x, y, w, h) ->
-	# if w is 4 and h is 4
-	# 	return smallBoundingBox(x, y)
-	if w is 1 and h is 1
-		if pixels[4 * (y * size + x) + 3] > 0
-			return [[x, y, 1, 1, 0]]
-		else
-			return []
+	if w is 4 and h is 4
+		return smallBoundingBox(x, y)
+	# if w is 1 and h is 1
+	# 	if pixels[4 * (y * size + x) + 3] > 0
+	# 		return [[x, y, 1, 1, 0]]
+	# 	else
+	# 		return []
 	
 
 	# 

@@ -84,10 +84,10 @@ smallBoundingBox = function(x, y) {
         continue;
       }
       if (getPixel(x + i, y + j)) {
-        xmin = Math.min(xmin, x + i);
-        xmax = Math.max(xmax, x + i);
-        ymin = Math.min(ymin, y + i);
-        ymax = Math.max(ymax, y + i);
+        xmin = Math.min(xmin, i);
+        xmax = Math.max(xmax, i);
+        ymin = Math.min(ymin, j);
+        ymax = Math.max(ymax, j);
       }
     }
   }
@@ -99,12 +99,8 @@ smallBoundingBox = function(x, y) {
 
 divideQuadrants = function(x, y, w, h) {
   var a, b, bound, boundary, box, boxes, boxtmp, h1, h2, hh, hw, pair, pairs, score, skipbox, sorted, start, w1, w2, waste1, weight, x1, x2, y1, y2, _j, _len, _ref;
-  if (w === 1 && h === 1) {
-    if (pixels[4 * (y * size + x) + 3] > 0) {
-      return [[x, y, 1, 1, 0]];
-    } else {
-      return [];
-    }
+  if (w === 4 && h === 4) {
+    return smallBoundingBox(x, y);
   }
   hw = w >> 1;
   hh = h >> 1;
