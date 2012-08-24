@@ -1,6 +1,6 @@
 canvas = document.getElementById('c')
 c = canvas.getContext('2d')
-size = 2048
+size = 4096
 canvas.width = canvas.height = size
 
 rng_state = 123
@@ -12,13 +12,13 @@ rand = ->
 # 	console.log 'click'
 # 	c.fillRect e.clientX - 20, e.clientY - 20, 40, 40
 c.fillStyle = '#007fff'
-for i in [0...490]
+for i in [0...1490]
 	x = rand() * size
 	y = rand() * size
 	w = rand() * 4 + 1
 	c.fillRect (x - w) + .5, (y - w) + .5, w * 2, w * 2
 
-# c.fillRect 100, 100, 100, 100
+c.fillRect 10, 10, 100, 100
 # c.fillRect 600, 600, 100, 100
 
 pixels = c.getImageData(0, 0, size, size).data
@@ -59,21 +59,83 @@ weightMerger = ([x1, y1, w1, h1, waste1], [x2, y2, w2, h2, waste2]) ->
 
 	# compare the areas to see if it's worth merging
 	# or waste / (maxw * maxh) < 0.5
-	if amax - asum < Math.pow(20, 2) 
+	# squareness = 1 + Math.pow(maxw - maxh, 2) / 1000
+
+	if (amax - asum) < Math.pow(40, 2)
 		return [waste, bound]
 
 	# aww no merging for you
 	return null
 
-merges = 0
+# merges = 0
 layers = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+
+getPixel = (x, y) ->
+	return pixels[4 * (y * size + x) + 3] > 0
+
+smallBoundingBox = (x, y) ->
+	# this calculates the bounding box for a 4x4 block
+	# why exactly? because at this point, merging and 
+	# doing all that other crap becomes quite slow, well
+	# its actually really fast, but since theres so much 
+	# of it, that it's not worth doing, so here's the 
+	# solution: special algorithm that calculates the
+	# bounding box of this crap, the cool thing is that you
+	# can actually save processing time woot by ignoring
+	# certain pixels once you've established key regions
+
+	# in an ideal example, if you have the outer four
+	# pixels marked as active, then you can return 
+	# without even looking into the other 12 pixels
+	# because you already know the bounding box
+	
+	xmin = 5
+	ymin = 5
+	xmax = -1
+	ymax = -1
+
+	sched = [[0,0],[0,3],[3,3],[3,0], # these are important
+			[0,1], # TODO: put the rest of this in some optimal order
+			[0,2],
+			[1,0],
+			[1,1],
+			[1,2],
+			[1,3],
+			[2,0],
+			[2,1],
+			[2,2],
+			[2,3],
+			[3,1],
+			[3,2]]
+
+	for i in [0...4]
+		for j in [0...4]
+			# if this kind of thing wouldnt advance the frontier, why bother
+			if xmin < i < xmax and ymin < j < ymax
+				continue
+			if getPixel(x + i, y + j)
+				xmin = Math.min(xmin, x + i)
+				xmax = Math.max(xmax, x + i)
+				ymin = Math.min(ymin, y + i)
+				ymax = Math.max(ymax, y + i)
+
+	return [] if ymax < 0
+	
+	return [[x + xmin, y + ymin, xmax - xmin, ymax - ymin, 0]]
+
+
+
+
 divideQuadrants = (x, y, w, h) ->
+	# if w is 4 and h is 4
+	# 	return smallBoundingBox(x, y)
 	if w is 1 and h is 1
 		if pixels[4 * (y * size + x) + 3] > 0
 			return [[x, y, 1, 1, 0]]
 		else
 			return []
-	# 
+	
 
 	# 
 	# c.strokeRect x, y, w, h
@@ -89,12 +151,48 @@ divideQuadrants = (x, y, w, h) ->
 
 	hw = w >> 1
 	hh = h >> 1
+
+	start = +new Date
+
 	boxes = [].concat divideQuadrants(x, y, hw, hh),
 		divideQuadrants(x + hw, y, hw, hh),
 		divideQuadrants(x + hw, y + hh, hw, hh),
 		divideQuadrants(x, y + hh, hw, hh)
 
-	# start = +new Date
+	# if w is 2 and h is 2 and boxes.length is 4
+	# 	return [[x, y, 2, 2, 0]]
+
+	
+	skipbox = []
+	if w > 512
+		# optimization for the bigger squares to prevent the weird combinatorial explosion
+
+		
+		boundary = 128
+		
+		# start at the 1/4 and end at 3/4 for little middle square
+
+		x2 = x + boundary
+		y2 = y + boundary
+
+		w2 = w - boundary * 2
+		h2 = h - boundary * 2
+
+		boxtmp = boxes
+		boxes = []
+
+		for box in boxtmp
+			[x1, y1, w1, h1, waste1] = box
+			if x1 > x2 and y1 > y2 and (x1 + w1) < (x2 + w2) and (y1 + h1) < (y2 + h2)
+				# bam, this square is wholly within the center of the box
+				# meaning that there is at least a w/4 merge boundary
+				skipbox.push box
+			else
+				boxes.push box
+
+
+		console.log 'skipping', skipbox.length, boxes.length
+
 	# merge boxes!
 	while boxes.length > 1 #loop until it's done
 		# try to 	
@@ -112,7 +210,7 @@ divideQuadrants = (x, y, w, h) ->
 		sorted = pairs.sort (a, b) ->
 			return a[0] - b[0]
 
-		merges++
+		# merges++
 
 		[score, bound, a, b] = sorted[0]
 		boxes = (box for box in boxes when box isnt a and box isnt b)
@@ -120,8 +218,9 @@ divideQuadrants = (x, y, w, h) ->
 		# console.log boxes
 
 	
-	# layers[Math.log(w) / Math.log(2) - 1] += new Date - start
-	return boxes
+	layers[Math.log(w) / Math.log(2) - 1] += new Date - start
+	# layers[Math.log(w) / Math.log(2) - 1] += boxes.length
+	return boxes.concat skipbox
 
 
 reference = (w, h) ->
