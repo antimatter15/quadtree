@@ -1,6 +1,6 @@
 canvas = document.getElementById('c')
 c = canvas.getContext('2d')
-size = 4096
+size = 1024
 canvas.width = canvas.height = size
 
 rng_state = 123
@@ -12,11 +12,14 @@ rand = ->
 # 	console.log 'click'
 # 	c.fillRect e.clientX - 20, e.clientY - 20, 40, 40
 c.fillStyle = '#007fff'
-for i in [0...1490]
+for i in [0...100]
 	x = rand() * size
 	y = rand() * size
-	w = rand() * 4 + 1
-	c.fillRect (x - w) + .5, (y - w) + .5, w * 2, w * 2
+	w = rand() * 60 + 1
+	for j in [0...w]
+		for k in [0...w]
+			if Math.random() > 0.7
+				c.fillRect x + j, y + k, 1, 1
 
 c.fillRect 10, 10, 100, 100
 # c.fillRect 600, 600, 100, 100
@@ -32,13 +35,31 @@ combinations = (list) ->
 			newlist.push [list[a], list[b]]
 	newlist
 
+counter = 0
+max_core = (a, b) -> 
+	counter++
+	if a > b
+		return a
+	else
+		return b
+
+max = (a, b) ->
+	test = max_core(a, b)
+	nat = Math.max(a, b)
+	if test != nat
+		console.log test, nat, a, b, counter
+	return test
+
+
+for i in [0...123732]
+	max(15, 31)
 
 weightMerger = ([x1, y1, w1, h1, waste1], [x2, y2, w2, h2, waste2]) ->
 	# calculate the bounding box
 	minx = Math.min x1, x2
 	miny = Math.min y1, y2
-	maxx = Math.max (x1 + w1), (x2 + w2)
-	maxy = Math.max (y1 + h1), (y2 + h2)
+	maxx = max (x1 + w1), (x2 + w2)
+	maxy = max (y1 + h1), (y2 + h2)
 	maxw = maxx - minx
 	maxh = maxy - miny
 	# calculate the areas
@@ -47,11 +68,24 @@ weightMerger = ([x1, y1, w1, h1, waste1], [x2, y2, w2, h2, waste2]) ->
 	asum = a1 + a2
 	amax = maxw * maxh
 	
+	if maxw < 0 or maxh < 0
+		console.log [x1, y1, w1, h1], [x2, y2, w2, h2], maxw, maxh, [maxx, maxy], [minx, miny]
+
 	# there are cases when asum > amax, such as when there's an overlap
 	# calculate waste, the metric being used to find what to merge first
 	waste = waste1 + waste2 + Math.max(0, amax - asum)
 
 	bound = [minx, miny, maxw, maxh, waste]
+
+	dx = max(x1, x2) - Math.min(x1 + w1, x2 + w2)
+	dy = max(y1, y2) - Math.min(y1 + h1, y2 + h2)
+	dist = 0
+	if dx < 0
+		dist = max(dy, 0)
+	else if dy < 0
+		dist = dx
+	else
+		dist = Math.sqrt(dx * dx + dy * dy)
 
 	# check if the rectangles overlap, in which case you merge immediately
 	unless (y1 + h1) < y2 or y1 > (y2 + h2) or (x1 + w1) < x2 or x1 > (x2 + w2)
@@ -60,9 +94,11 @@ weightMerger = ([x1, y1, w1, h1, waste1], [x2, y2, w2, h2, waste2]) ->
 	# compare the areas to see if it's worth merging
 	# or waste / (maxw * maxh) < 0.5
 	# squareness = 1 + Math.pow(maxw - maxh, 2) / 1000
-
-	if (amax - asum) < Math.pow(40, 2)
+	if dist < 5
 		return [waste, bound]
+
+	# if (amax - asum) < 10
+	# 	return [waste, bound]
 
 	# aww no merging for you
 	return null
@@ -85,17 +121,17 @@ smallBoundingBox = (x, y) ->
 	# can actually save processing time woot by ignoring
 	# certain pixels once you've established key regions
 
-	# in an ideal example, if you have the outer four
-	# pixels marked as active, then you can return 
-	# without even looking into the other 12 pixels
-	# because you already know the bounding box
+	# in an ideal example, if you have [0,0] and [3,3] marked
+	# then you dont need to check the other 12 pixels because
+	# you already know the bounds
 	
 	xmin = 5
 	ymin = 5
 	xmax = -1
 	ymax = -1
 
-	sched = [[0,0],[0,3],[3,3],[3,0], # these are important
+	sched = [[0,0],[3,3], # these are important
+			[0,3],[3,0], 
 			[0,1], # TODO: put the rest of this in some optimal order
 			[0,2],
 			[1,0],
@@ -121,7 +157,6 @@ smallBoundingBox = (x, y) ->
 				ymax = Math.max(ymax, j)
 
 	return [] if ymax < 0
-	
 	return [[x + xmin, y + ymin, xmax - xmin, ymax - ymin, 0]]
 
 
@@ -162,7 +197,10 @@ divideQuadrants = (x, y, w, h) ->
 	# if w is 2 and h is 2 and boxes.length is 4
 	# 	return [[x, y, 2, 2, 0]]
 
-	
+	c.strokeStyle = 'rgba(0,0,0,0.1)'
+	c.strokeRect x, y, w, h
+	c.strokeStyle = 'black'
+
 	skipbox = []
 	if w > 512
 		# optimization for the bigger squares to prevent the weird combinatorial explosion
@@ -280,6 +318,13 @@ console.timeEnd("tree")
 console.time("merge")
 parts = divideQuadrants(0, 0, size, size)
 console.timeEnd("merge")
+
+c.strokeStyle = 'green'
+c.lineWidth = 2
 for [x, y, w, h, e] in parts
 	# console.log x, y, w, h, e / (w * h)
 	c.strokeRect x + 0.5, y+ 0.5, w, h
+
+for [[x1, y1, w1, h1, waste1], [x2, y2, w2, h2, waste2]] in combinations(parts)
+	unless (y1 + h1) < y2 or y1 > (y2 + h2) or (x1 + w1) < x2 or x1 > (x2 + w2)
+		console.log 'intersection'
